@@ -1,0 +1,11 @@
+lib-cov
+*.DS_Store
+*.txt
+*.tgz
+*.log
+
+.idea/
+-/
+project/
+target/
+lib/
