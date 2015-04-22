@@ -25,8 +25,9 @@ object Exercise1 {
       xml.map(Person.parseXml(_))
     }
 
-    val count = persons.count()
+    persons.foreach(p => println(Person.toString(p)))
 
+    val count = persons.count()
     println("Number of persons: " + count)
   }
 }
