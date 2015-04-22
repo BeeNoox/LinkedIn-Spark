@@ -17,11 +17,12 @@ import scala.xml.XML
 
 
 /**
- * Exercice 1 : Compte le nombre d'entreprises à Sydney qui font du Java
+ * Exercise 1 : Count the number of companies in Sydney working with Java
  */
 object Exercise1 {
-  // Not serializable so we make it transient and lazy
-  //implicit val formats = DefaultFormats // Brings in default date formats etc.
+
+  // DefaultFormats isn't serializable so we make it transient and lazy
+  // DefaultFormats brings in default date formats etc.
   @transient lazy implicit private val formats = new DefaultFormats {
     override def dateFormatter: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS")
   }
@@ -32,15 +33,16 @@ object Exercise1 {
     // Spark Context setup
     val sc = new SparkContext("local[4]", "Exercise1")
 
+    // Read XML files
     val files = sc.wholeTextFiles("/Users/alex/Development/spark/LinkedIn-Spark/src/main/resources/extract/*.txt")
 
+    // Convert each XML file to a Person
     val persons: RDD[Person] = files.flatMap { file =>
       val xml = XML.loadString(file._2)
       xml.map(Person.parseXml(_))
     }
 
-    persons.foreach(p => println(p))
-
+    // Write each person in JSON format
     persons.foreach(p => println(write(p)))
 
     val count = persons.count()
