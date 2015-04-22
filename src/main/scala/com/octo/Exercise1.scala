@@ -7,6 +7,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.hive.HiveContext
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
@@ -32,6 +33,7 @@ object Exercise1 {
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "Exercise1")
+    val sqlContext = new HiveContext(sc)
 
     // Read XML files
     val files = sc.wholeTextFiles("/Users/alex/Development/spark/LinkedIn-Spark/src/main/resources/extract/*.txt")
@@ -42,10 +44,25 @@ object Exercise1 {
       xml.map(Person.parseXml(_))
     }
 
-    // Write each person in JSON format
-    persons.foreach(p => println(write(p)))
+    // RDD of serialized JSON
+    val json = persons.map(write(_))
 
-    val count = persons.count()
-    println("Number of persons: " + count)
+    // Registering JSON persons in hive context
+    val personsTable = sqlContext.jsonRDD(json)
+    personsTable.registerTempTable("persons")
+    sqlContext.cacheTable("persons")
+
+    // Creating a view
+    val viewSql =
+      """
+        |SELECT firstname, lastname, location, c.name, s.name
+        |FROM persons
+        |LATERAL VIEW explode(skills) skillsTable AS s
+        |LATERAL VIEW explode(companies) companiesTable AS c
+      """.stripMargin
+    val result = sqlContext.sql(viewSql).collect()
+
+    // Display view result
+    result.foreach(println(_))
   }
 }

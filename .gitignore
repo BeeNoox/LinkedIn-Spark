@@ -3,6 +3,7 @@
 *.tgz
 *.log
 
+metastore_db/
 .idea/
 -/
 project/

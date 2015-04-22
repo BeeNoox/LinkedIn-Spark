@@ -27,7 +27,4 @@ object Person {
 
   def getLocation(node: scala.xml.Node):
     String = (node \ "location" \ "name").text.trim()
-
-  def toString(p: Person):
-    String = "Person: (firstname: " + p.firstname + ", lastname: " + p.lastname + ", location: " + p.location + ", companies: " + p.companies.foreach(p => println(Company.toString(p))) + ", skills:" + p.skills.foreach(s => println(Skill.toString(s))) + ")"
 }

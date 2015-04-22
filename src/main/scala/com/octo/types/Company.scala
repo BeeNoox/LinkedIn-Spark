@@ -17,7 +17,4 @@ object Company {
         (position \ "company" \ "universal-name").text,
         (position \ "is-current").text.toBoolean )
     }
-
-  def toString(c: Company):
-    String = "Company: (name:" + c.name + ", universalName:" + c.universalname + ", isCurrent:" + c.isCurrent + ")"
 }
