@@ -2,16 +2,14 @@ package com.octo
 
 import java.text.SimpleDateFormat
 
-import com.octo.types.Person
+import com.octo.types.{CompanySkillsView, Person}
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
-import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
 import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{read, write}
+
+import org.json4s.jackson.Serialization.write
 
 import scala.xml.XML
 
@@ -23,7 +21,7 @@ import scala.xml.XML
 object Exercise1 {
 
   // DefaultFormats isn't serializable so we make it transient and lazy
-  // DefaultFormats brings in default date formats etc.
+  // DefaultFormats brings in default date formats for JSON serialization
   @transient lazy implicit private val formats = new DefaultFormats {
     override def dateFormatter: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS")
   }
@@ -33,10 +31,11 @@ object Exercise1 {
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "Exercise1")
-    val sqlContext = new HiveContext(sc)
+    val hiveContext = new HiveContext(sc)
+    val sqlContext = new SQLContext(sc)
 
     // Read XML files
-    val files = sc.wholeTextFiles("/Users/alex/Development/spark/LinkedIn-Spark/src/main/resources/extract/*.txt")
+    val files = sc.wholeTextFiles("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/extract/*.txt")
 
     // Convert each XML file to a Person
     val persons: RDD[Person] = files.flatMap { file =>
@@ -48,21 +47,39 @@ object Exercise1 {
     val json = persons.map(write(_))
 
     // Registering JSON persons in hive context
-    val personsTable = sqlContext.jsonRDD(json)
+    val personsTable = hiveContext.jsonRDD(json)
     personsTable.registerTempTable("persons")
-    sqlContext.cacheTable("persons")
+    hiveContext.cacheTable("persons")
 
     // Creating a view
     val viewSql =
       """
-        |SELECT firstname, lastname, location, c.name, s.name
+        |SELECT c.universalname, c.name, location, c.isCurrent, s.name
         |FROM persons
         |LATERAL VIEW explode(skills) skillsTable AS s
         |LATERAL VIEW explode(companies) companiesTable AS c
       """.stripMargin
-    val result = sqlContext.sql(viewSql).collect()
+    val view = hiveContext.sql(viewSql)
+      .map(row => CompanySkillsView(row.getString(0), row.getString(1), row.getString(2), row.getBoolean(3), row.getString(4)))
+      .map(write(_))
 
-    // Display view result
+    // Insert flattened data into a Spark SQL table
+    val schemaRDD = sqlContext.jsonRDD(view)
+    schemaRDD.registerTempTable("view")
+    schemaRDD.printSchema()
+
+    // Number of companies working with Java in Sydney
+    val sqlReq =
+    """
+      |SELECT location, count(name) as
+      |FROM view
+      |WHERE isCurrent = true
+      |AND skill = 'Java'
+      |AND location LIKE '%Sydney%'
+      |GROUP BY location
+    """.stripMargin
+    val result = sqlContext.sql(sqlReq).collect()
+
     result.foreach(println(_))
   }
 }

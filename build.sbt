@@ -1,4 +1,4 @@
-name := "LinkedIn-Spark"
+name := "linkedinspark"
 
 version := "1.0"
 
