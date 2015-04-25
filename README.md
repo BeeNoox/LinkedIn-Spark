@@ -21,10 +21,13 @@ Use Apache Spark to request LinkedIn exports!
 ## Run a request on data
 
 Count the number of companies in a given city working with a given skill
+
 `$ sbt "run-main com.octo.ReqCitySkillCompanyCount Sydney Java"`
 
 City working the most with a skill
+
 `$ sbt "run-main com.octo.ReqSkillTopCity Java"`
 
 Top 10 skills in a city
+
 `$ sbt "run-main com.octo.ReqCitySkillsTopTen Sydney"`
