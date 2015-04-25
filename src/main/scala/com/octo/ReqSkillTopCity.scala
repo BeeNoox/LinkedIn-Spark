@@ -11,15 +11,17 @@ object ReqSkillTopCity {
 
   def main(args: Array[String]) {
     val skill = args(0)
+    val files = args(1)
 
     println("-> City working the most with " + skill)
+    println("(File(s) used:" + files + ")")
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "ReqSkillTopCity")
     val sqlContext = new SQLContext(sc)
 
     // Insert flattened data into a Spark SQL table
-    val schemaRDD = sqlContext.jsonFile("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/fullflat/part-*")
+    val schemaRDD = sqlContext.jsonFile(files)
     schemaRDD.registerTempTable("view")
     schemaRDD.printSchema()
 

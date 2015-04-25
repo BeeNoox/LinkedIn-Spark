@@ -12,15 +12,17 @@ object ReqCitySkillCompanyCount {
   def main(args: Array[String]) {
     val city = args(0)
     val skill = args(1)
+    val files = args(2)
 
     println("-> Count the number of companies in " + city + " working with skill " + skill)
+    println("(File(s) used:" + files + ")")
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "ReqCitySkillCompanyCount")
     val sqlContext = new SQLContext(sc)
 
     // Insert flattened data into a Spark SQL table
-    val schemaRDD = sqlContext.jsonFile("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/fullflat/part-*")
+    val schemaRDD = sqlContext.jsonFile(files)
     schemaRDD.registerTempTable("view")
     schemaRDD.printSchema()
 
