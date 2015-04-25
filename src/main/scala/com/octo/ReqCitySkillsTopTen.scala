@@ -10,20 +10,16 @@ import org.apache.spark.sql.SQLContext
 object ReqCitySkillsTopTen {
 
   def main(args: Array[String]) {
-    println("-> Top 10 skills in a city")
+    val city = args(0)
+
+    println("-> Top 10 skills in " + city)
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "ReqCitySkillsTopTen")
     val sqlContext = new SQLContext(sc)
 
-    // RDD of serialized JSON
-    val json = LinkedInHelper.toJSON("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/extract/*.txt", sc)
-
-    // Flatten the serialized Person JSON to a view
-    val view = LinkedInHelper.toFlatView(json, sc)
-
     // Insert flattened data into a Spark SQL table
-    val schemaRDD = sqlContext.jsonRDD(view)
+    val schemaRDD = sqlContext.jsonFile("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/fullflatdistinct/part-*")
     schemaRDD.registerTempTable("view")
     schemaRDD.printSchema()
 
@@ -33,11 +29,11 @@ object ReqCitySkillsTopTen {
         |SELECT skill, count(skill) AS c
         |FROM view
         |WHERE isCurrent = true
-        |AND location LIKE '%Sydney%'
+        |AND location LIKE '%""" + city + """%'
         |GROUP BY skill
         |ORDER BY c DESC
-      """.stripMargin
-    val result = sqlContext.sql(sqlReq).collect()
+      """
+    val result = sqlContext.sql(sqlReq.stripMargin).collect()
 
     result.foreach(println(_))
   }

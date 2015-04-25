@@ -2,6 +2,7 @@ package com.octo
 
 import java.text.SimpleDateFormat
 
+import com.octo.helpers.LinkedInHelper
 import com.octo.types.Person
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -15,7 +16,7 @@ import scala.xml.XML
  * arg1: input file or folder
  * arg2: output folder
  */
-object ConvertXMLFilesToJSONFile {
+object ConvertXMLFilesToFlatJSONFile {
   // DefaultFormats isn't serializable so we make it transient and lazy
   // DefaultFormats brings in default date formats etc.
   @transient lazy implicit private val formats = new DefaultFormats {
@@ -26,30 +27,24 @@ object ConvertXMLFilesToJSONFile {
     val input = args(0)
     val output = args(1)
 
-    println("Converting LinkedIn XML file(s) to a JSON file")
+    println("Converting LinkedIn XML file(s) to a flattened JSON file")
     println("- input files arg: " + input)
     println("- output dir arg: " + output)
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "ConvertXMLFilesToJSONFile")
 
-    // Read XML files
-    val files = sc.wholeTextFiles(input)
+    // RDD of serialized JSON
+    val json = LinkedInHelper.toJSON(input, sc)
 
-    // Convert each XML file to a Person
-    val persons: RDD[Person] = files.flatMap { file =>
-      val xml = XML.loadString(file._2)
-      xml.map(Person.parseXml(_))
-    }
-
-    // RDD of JSON strings
-    val json = persons.map(write(_))
+    // Flatten the serialized Person JSON to a view
+    val view = LinkedInHelper.toFlatView(json, sc)
 
     // Write a JSON formatted file(s)
-    // number of files depending of computation distribution
-    json.saveAsTextFile(output)
+    // Number of files depending of computation distribution
+    view.saveAsTextFile(output)
 
-    val count = persons.count()
-    println("Number of persons: " + count)
+    val count = view.count()
+    println("Number of rows: " + count)
   }
 }

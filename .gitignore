@@ -7,5 +7,6 @@ metastore_db/
 .idea/
 -/
 project/
+src/main/resources/
 target/
 lib/

@@ -5,25 +5,21 @@ import org.apache.spark.sql.SQLContext
 
 
 /**
- * City working the most with Java
+ * City working the most with a skill
  */
 object ReqSkillTopCity {
 
   def main(args: Array[String]) {
-    println("-> City working the most with Java")
+    val skill = args(0)
+
+    println("-> City working the most with " + skill)
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "ReqSkillTopCity")
     val sqlContext = new SQLContext(sc)
 
-    // RDD of serialized JSON
-    val json = LinkedInHelper.toJSON("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/extract/*.txt", sc)
-
-    // Flatten the serialized Person JSON to a view
-    val view = LinkedInHelper.toFlatView(json, sc)
-
     // Insert flattened data into a Spark SQL table
-    val schemaRDD = sqlContext.jsonRDD(view)
+    val schemaRDD = sqlContext.jsonFile("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/fullflat/part-*")
     schemaRDD.registerTempTable("view")
     schemaRDD.printSchema()
 
@@ -33,11 +29,11 @@ object ReqSkillTopCity {
         |SELECT location, count(location) AS c
         |FROM view
         |WHERE isCurrent = true
-        |AND skill = 'Java'
+        |AND skill = '""" + skill + """'
         |GROUP BY location
         |ORDER BY c DESC
-      """.stripMargin
-    val result = sqlContext.sql(sqlReq).collect()
+      """
+    val result = sqlContext.sql(sqlReq.stripMargin).collect()
 
     result.foreach(println(_))
   }

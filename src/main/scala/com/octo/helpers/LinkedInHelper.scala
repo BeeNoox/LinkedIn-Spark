@@ -1,4 +1,4 @@
-package com.octo
+package com.octo.helpers
 
 import java.text.SimpleDateFormat
 
@@ -47,9 +47,9 @@ object LinkedInHelper {
   /**
    * Transform a RDD of JSON serialized Person to a flat view
    *
-   * @param jsonRDD their name
+   * @param jsonRDD RDD of serialized JSON Persons
    * @param sc current SparkContext
-   * @return JSON RDD
+   * @return RDD of Person JSON
    */
   def toFlatView(jsonRDD: RDD[String], sc: SparkContext): RDD[String] = {
     val hiveContext = new HiveContext(sc)
@@ -62,7 +62,7 @@ object LinkedInHelper {
     // Creating a view
     val viewSql =
     """
-      |SELECT c.universalname, c.name, location, c.isCurrent, s.name
+      |SELECT DISTINCT c.universalname, c.name, location, c.isCurrent, s.name
       |FROM persons
       |LATERAL VIEW explode(skills) skillsTable AS s
       |LATERAL VIEW explode(companies) companiesTable AS c

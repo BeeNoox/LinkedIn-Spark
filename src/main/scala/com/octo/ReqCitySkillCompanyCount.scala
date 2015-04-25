@@ -5,25 +5,22 @@ import org.apache.spark.sql.SQLContext
 
 
 /**
- * Count the number of companies in Sydney working with Java
+ * Count the number of companies in a given city working with a given skill
  */
 object ReqCitySkillCompanyCount {
 
   def main(args: Array[String]) {
-    println("-> Count the number of companies in Sydney working with Java")
+    val city = args(0)
+    val skill = args(1)
+
+    println("-> Count the number of companies in " + city + " working with skill " + skill)
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "ReqCitySkillCompanyCount")
     val sqlContext = new SQLContext(sc)
 
-    // RDD of serialized JSON
-    val json = LinkedInHelper.toJSON("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/extract/*.txt", sc)
-
-    // Flatten the serialized Person JSON to a view
-    val view = LinkedInHelper.toFlatView(json, sc)
-
     // Insert flattened data into a Spark SQL table
-    val schemaRDD = sqlContext.jsonRDD(view)
+    val schemaRDD = sqlContext.jsonFile("/Users/alex/Development/spark-vagrant/LinkedIn-Spark/src/main/resources/fullflat/part-*")
     schemaRDD.registerTempTable("view")
     schemaRDD.printSchema()
 
@@ -33,11 +30,11 @@ object ReqCitySkillCompanyCount {
         |SELECT location, count(name)
         |FROM view
         |WHERE isCurrent = true
-        |AND skill = 'Java'
-        |AND location LIKE '%Sydney%'
+        |AND skill = '""" + skill + """'
+        |AND location LIKE '%""" + city + """%'
         |GROUP BY location
-      """.stripMargin
-    val result = sqlContext.sql(sqlReq).collect()
+      """
+    val result = sqlContext.sql(sqlReq.stripMargin).collect()
 
     result.foreach(println(_))
   }
