@@ -27,8 +27,8 @@ object ConvertXMLFilesToJSONFile {
     val output = args(1)
 
     println("Converting LinkedIn XML file(s) to a JSON file")
-    println("- input arg: " + input)
-    println("- output arg: " + output)
+    println("- input files arg: " + input)
+    println("- output dir arg: " + output)
 
     // Spark Context setup
     val sc = new SparkContext("local[4]", "ConvertXMLFilesToJSONFile")
