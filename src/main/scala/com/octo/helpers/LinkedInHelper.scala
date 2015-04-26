@@ -45,13 +45,13 @@ object LinkedInHelper {
   }
 
   /**
-   * Transform a RDD of JSON serialized Person to a flat view
+   * Transform a RDD of Person JSON to a RDD of CompanySkillsView
    *
    * @param jsonRDD RDD of serialized JSON Persons
    * @param sc current SparkContext
-   * @return RDD of Person JSON
+   * @return RDD of CompanySkillsView
    */
-  def toFlatView(jsonRDD: RDD[String], sc: SparkContext): RDD[String] = {
+  def toFlatViewClass(jsonRDD: RDD[String], sc: SparkContext): RDD[CompanySkillsView] = {
     val hiveContext = new HiveContext(sc)
 
     // Registering JSON persons in hive context
@@ -61,16 +61,27 @@ object LinkedInHelper {
 
     // Creating a view
     val viewSql =
-    """
-      |SELECT DISTINCT c.universalname, c.name, location, c.isCurrent, s.name
-      |FROM persons
-      |LATERAL VIEW explode(skills) skillsTable AS s
-      |LATERAL VIEW explode(companies) companiesTable AS c
-    """.stripMargin
+      """
+        |SELECT DISTINCT c.universalname, c.name, location, c.isCurrent, s.name
+        |FROM persons
+        |LATERAL VIEW explode(skills) skillsTable AS s
+        |LATERAL VIEW explode(companies) companiesTable AS c
+      """.stripMargin
     val view = hiveContext.sql(viewSql)
       .map(row => CompanySkillsView(row.getString(0), row.getString(1), row.getString(2), row.getBoolean(3), row.getString(4)))
-      .map(write(_))
 
     view
+  }
+
+  /**
+   * Transform a RDD of JSON serialized Person to a flat view
+   *
+   * @param jsonRDD RDD of serialized JSON Persons
+   * @param sc current SparkContext
+   * @return RDD of CompanySkillsView JSON string
+   */
+  def toFlatView(jsonRDD: RDD[String], sc: SparkContext): RDD[String] = {
+    val view = toFlatViewClass(jsonRDD, sc)
+    view.map(write(_))
   }
 }
