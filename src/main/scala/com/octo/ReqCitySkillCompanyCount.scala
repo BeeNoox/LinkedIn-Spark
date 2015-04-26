@@ -18,7 +18,7 @@ object ReqCitySkillCompanyCount {
     println("(File(s) used:" + files + ")")
 
     // Spark Context setup
-    val sc = new SparkContext("local[8]", "ReqCitySkillCompanyCount")
+    val sc = new SparkContext("local[4]", "ReqCitySkillCompanyCount")
     val sqlContext = new SQLContext(sc)
 
     // Insert flattened data into a Spark SQL table
