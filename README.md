@@ -20,7 +20,7 @@ Use Apache Spark to request LinkedIn exports!
 
 ## Run a request on data
 
-`files` argument must be valued with the JSON files from above (ex: ./linkedinfiles/part-*)
+`files` argument must be valued with the JSON files from above (ex: `./linkedinfiles/part-*`)
 
 Count the number of companies in a given city working with a given skill
 
